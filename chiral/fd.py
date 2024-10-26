@@ -77,13 +77,16 @@ class FD:
             self.fd_executable,
             "--case-sensitive" if case_sensitive else "--ignore-case",  # Set case-sensitivity based on input.
             "--absolute-path",  # Output absolute paths for search results.
-            "-tf" if search_type["file"] else "",  # Include the file flag if searching for files.
-            "-td" if search_type["directory"] else "",  # Include the directory flag if searching for directories.
-            "-tl" if search_type["symlink"] else "",  # Include the symlink flag if searching for symlinks.
+            "-tf" if search_type["file"] else None,  # Include the file flag if searching for files.
+            "-td" if search_type["directory"] else None,  # Include the directory flag if searching for directories.
+            "-tl" if search_type["symlink"] else None,  # Include the symlink flag if searching for symlinks.
             f"--search-path={search_path}",  # Define the base directory for the search.
             "--color=never",  # Disable color in output for easier processing.
             search  # Add the search term or pattern to the command.
         ]
+
+        # Remove any None values from the command list.
+        command = [string for string in command if string is not None]
 
         # Start the 'fd' command as a subprocess, capturing its output line-by-line.
         find_file = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
