@@ -1,3 +1,4 @@
+import json  # Provides tools for parsing and generating JSON data, used here to interpret ripgrep's JSON output.
 import subprocess  # Allows interaction with system processes and command-line tools.
 import os  # Provides functions for interacting with the operating system and manipulating file paths.
 
@@ -19,6 +20,26 @@ class RG:
         """
         self.rg_executable = rg_executable
 
+    @staticmethod
+    def process_rg_json(output: list[str]) -> list[dict]:
+        """
+        Processes a list of JSON-formatted strings output by the ripgrep tool, extracting matches.
+
+        :param output: A list of JSON strings, each containing data about a match or other event.
+        :type output: list[str]
+        :return: A list of dictionaries, each representing a matched item in the search results.
+        :rtype: list[dict]
+        """
+        results = []
+
+        for result in output:
+            data = json.loads(result)  # Parse each JSON string into a dictionary.
+
+            if data['type'] == 'match':  # Only process entries marked as 'match'.
+                results.append(data)  # Append each match entry to the results list.
+
+        return results  # Return the list of match entries.
+
     def search_file(
             self,
             search: str | os.PathLike,
@@ -27,7 +48,7 @@ class RG:
             smart_case: bool = False,
             follow_symlinks: bool = False,
             search_hidden: bool = False,
-    ) -> list[str]:
+    ) -> list[dict]:
         """
         Searches for files within the specified path using the ripgrep search tool.
 
@@ -46,7 +67,7 @@ class RG:
         :param search_hidden: If True, includes hidden files and directories in the search. Defaults to False.
         :type search_hidden: bool, optional
         :return: A list of strings, each representing a path that matches the search criteria.
-        :rtype: list[str]
+        :rtype: list[dict]
         """
         results: list[str] = []
 
@@ -59,7 +80,7 @@ class RG:
             "--hidden" if search_hidden else None,
             "--json",  # Output results in JSON format for easier parsing.
             "--no-stats",  # Suppress statistics to reduce output clutter.
-            f"'{search}'",  # Add the search term.
+            search,  # Add the search term.
             search_path  # Define the base directory for the search.
         ]
 
@@ -67,17 +88,15 @@ class RG:
         command = [string for string in command if string is not None]
 
         # Start the 'rg' command as a subprocess, capturing its output line-by-line.
-        find_file = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-
-        print(" ".join(command))  # Print the command for debugging.
-        print(command)  # Print the command list for debugging.
+        find_text = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         # Process each line of output from the subprocess.
         while True:
-            line = find_file.stdout.readline()  # Read the next line of output.
+            line = find_text.stdout.readline()  # Read the next line of output.
             if not line:  # If no line is returned, the search is complete.
                 break
 
             results.append(line.rstrip())  # Strip trailing newlines and add the result to the list.
 
-        return results  # Return the list of matched paths.
+        # Return the processed JSON results containing matched entries.
+        return self.process_rg_json(results)
