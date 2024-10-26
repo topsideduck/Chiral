@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "Chiral"
+version = "0.1.0"
+description = "Everything's a keyboard shortcut away."
+license = "GPL-3.0-only"
+authors = ["Harikeshav R <r.harikeshav@icloud.com>"]
+readme = "README.md"
+repository = "https://github.com/topsideduck/Chiral"
+
+
+[tool.poetry.dependencies]
+python = "^3.12"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
